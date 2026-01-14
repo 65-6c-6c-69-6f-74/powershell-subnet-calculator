@@ -1,4 +1,5 @@
-PowerShell Subnet Calculator
+**PowerShell Subnet Calculator**
+
 A lightweight, Windows-native GUI application built with PowerShell and WinForms. It simplifies IPv4 subnetting by providing instant calculations for network addresses, broadcast addresses, and usable host ranges.
 
 🚀 Features:
