@@ -9,6 +9,10 @@ A lightweight, Windows-native GUI application built with PowerShell and WinForms
 
 > Precision Math Engine: Uses 64-bit integer processing to prevent the "Value too large/small for UInt32" errors common in standard PowerShell bitwise operations.
 
+> IP Classification: Automatically identifies the legacy Class (A, B, C, D, or E) of the input address based on the first octet.
+
+> Network Scope Analysis: Determines if an address is Private (RFC 1918), Public, Loopback, or APIPA (Link-Local).
+
 > Clipboard Integration: A one-click "Copy Results" button captures all calculated data for easy pasting into documentation or tickets.
 
 > Monospaced Output: Results are displayed in Consolas font to ensure perfect alignment of IP addresses and labels.
