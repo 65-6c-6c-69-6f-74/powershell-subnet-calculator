@@ -27,25 +27,15 @@ A lightweight, Windows-native GUI application built with PowerShell and WinForms
 4. Calculate: Enter your target IP, select your CIDR mask from the dropdown, and click Calculate.
 
 🔬 Technical Specifications:
-Mathematical Reliability
-The calculator avoids the standard PowerShell -shl (shift-left) and -not (bitwise NOT) operators on 32-bit integers, which are known to cause signed-integer overflow errors (interpreting bit patterns as negative numbers like -1 or -256). Instead, it utilizes:
 
-[Math]::Pow: For clean, overflow-free power-of-two calculations.
+> The calculator avoids the standard PowerShell -shl (shift-left) and -not (bitwise NOT) operators on 32-bit integers, which are known to cause signed-integer overflow errors (interpreting bit patterns as negative numbers like -1 or -256). Instead, it utilizes:
 
-[uint64] Casting: All bitwise math is performed in a 64-bit space to ensure the 32nd bit (the sign bit in 32-bit integers) does not trigger an error.
+    [Math]::Pow: For clean, overflow-free power-of-two calculations.
 
-Layout Logic
-Language: PowerShell 5.1+
+    [uint64] Casting: All bitwise math is performed in a 64-bit space to ensure the 32nd bit (the sign bit in 32-bit integers) does not trigger an error.
 
-Framework: .NET System.Windows.Forms & System.Drawing
+> Language: PowerShell 5.1+
 
-Compatibility: Windows 10 / 11
+> Framework: .NET System.Windows.Forms & System.Drawing
 
-📝 Example Output:
-
-Network:      192.168.1.0
-Netmask:      255.255.255.0
-Broadcast:    192.168.1.255
-First Usable: 192.168.1.1
-Last Usable:  192.168.1.254
-Total Hosts:  254
+> Compatibility: Windows 10 / 11
