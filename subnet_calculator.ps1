@@ -3,8 +3,8 @@ Add-Type -AssemblyName System.Drawing
 
 # --- UI Setup ---
 $form = New-Object Windows.Forms.Form
-$form.Text = "Subnet Calculator"
-$form.Size = New-Object Drawing.Size(420, 540)
+$form.Text = "Subnet Calculator Pro + IP Info"
+$form.Size = New-Object Drawing.Size(420, 580)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "FixedDialog"
 
@@ -55,12 +55,12 @@ $form.Controls.Add($btnCopy)
 # Results Display
 $outputBox = New-Object Windows.Forms.RichTextBox
 $outputBox.Location = New-Object Drawing.Point(20, 150)
-$outputBox.Size = New-Object Drawing.Size(360, 300)
+$outputBox.Size = New-Object Drawing.Size(360, 360)
 $outputBox.ReadOnly = $true
 $outputBox.Font = New-Object Drawing.Font("Consolas", 10)
 $form.Controls.Add($outputBox)
 
-# --- Logic & Math --- #
+# --- Logic & Math ---
 
 function To-IPString ([uint64]$val) {
     $o1 = ($val -shr 24) -band 0xFF
@@ -87,36 +87,52 @@ $btnCalc.Add_Click({
         $ipParts = $inputIP.Text.Trim().Split('.')
         if ($ipParts.Count -ne 4) { throw "Invalid IP format" }
         
-        # Build 64-bit IP integer
-        [uint64]$ipUint = ([uint64]$ipParts[0] -shl 24) + ([uint64]$ipParts[1] -shl 16) + ([uint64]$ipParts[2] -shl 8) + [uint64]$ipParts[3]
+        [uint64]$o1 = [uint64]$ipParts[0]; [uint64]$o2 = [uint64]$ipParts[1]
+        [uint64]$o3 = [uint64]$ipParts[2]; [uint64]$o4 = [uint64]$ipParts[3]
         
-        # Get CIDR from dropdown
+        [uint64]$ipUint = ($o1 -shl 24) + ($o2 -shl 16) + ($o3 -shl 8) + $o4
         $cidr = [int]$comboCIDR.SelectedItem.ToString().Replace("/", "")
 
-        # Use Power of 2 to create the mask and wildcard to avoid -1 bitwise errors
-        [uint64]$totalAddresses = [Math]::Pow(2, (32 - $cidr))
-        [uint64]$maskUint = [uint64]([Math]::Pow(2, 32) - $totalAddresses)
-        [uint64]$wildcard = $totalAddresses - 1
-        
-        if ($cidr -eq 0) { $maskUint = 0; $wildcard = 0xFFFFFFFF }
+        # IP Class Logic
+        $ipClass = "Unknown"
+        if ($o1 -ge 1 -and $o1 -le 126) { $ipClass = "Class A" }
+        elseif ($o1 -eq 127) { $ipClass = "Class A (Loopback)" }
+        elseif ($o1 -ge 128 -and $o1 -le 191) { $ipClass = "Class B" }
+        elseif ($o1 -ge 192 -and $o1 -le 223) { $ipClass = "Class C" }
+        elseif ($o1 -ge 224 -and $o1 -le 239) { $ipClass = "Class D (Multicast)" }
+        elseif ($o1 -ge 240 -and $o1 -le 255) { $ipClass = "Class E (Experimental)" }
 
+        # Private vs Public Logic (RFC 1918)
+        $ipScope = "Public"
+        if ($o1 -eq 10) { $ipScope = "Private (10.0.0.0/8)" }
+        elseif ($o1 -eq 172 -and ($o2 -ge 16 -and $o2 -le 31)) { $ipScope = "Private (172.16.0.0/12)" }
+        elseif ($o1 -eq 192 -and $o2 -eq 168) { $ipScope = "Private (192.168.0.0/16)" }
+        elseif ($o1 -eq 169 -and $o2 -eq 254) { $ipScope = "APIPA (Link-Local)" }
+
+        # Math logic (64-bit safe)
+        [uint64]$totalAddresses = [Math]::Pow(2, (32 - $cidr))
+        [uint64]$maskUint = if ($cidr -eq 0) { 0 } else { [uint64]([Math]::Pow(2, 32) - $totalAddresses) }
+        [uint64]$wildcard = $totalAddresses - 1
         $netUint = $ipUint -band $maskUint
         $broadUint = $netUint -bor $wildcard
 
         $outputBox.Clear()
-        $res = "Network:      " + (To-IPString $netUint) + "`n"
-        $res += "Netmask:      " + (To-IPString $maskUint) + "`n"
-        $res += "Broadcast:    " + (To-IPString $broadUint) + "`n"
+        $res =  "--- IP Information ---`n"
+        $res += "Address Class: $($ipClass)`n"
+        $res += "Address Scope: $($ipScope)`n`n"
+        $res += "--- Subnet Details ---`n"
+        $res += "Network:       " + (To-IPString $netUint) + "`n"
+        $res += "Netmask:       " + (To-IPString $maskUint) + "`n"
+        $res += "Broadcast:     " + (To-IPString $broadUint) + "`n"
         
         if ($cidr -le 30) {
-            $res += "First Usable: " + (To-IPString ($netUint + 1)) + "`n"
-            $res += "Last Usable:  " + (To-IPString ($broadUint - 1)) + "`n"
-            $res += "Total Hosts:  " + ($totalAddresses - 2) + "`n"
+            $res += "First Usable:  " + (To-IPString ($netUint + 1)) + "`n"
+            $res += "Last Usable:   " + (To-IPString ($broadUint - 1)) + "`n"
+            $res += "Total Hosts:   " + ($totalAddresses - 2) + "`n"
         } elseif ($cidr -eq 31) {
-            $res += "Type:         P2P Link (RFC 3021)`n"
-            $res += "Usable IPs:   " + (To-IPString $netUint) + " and " + (To-IPString $broadUint) + "`n"
+            $res += "Type:          P2P Link (RFC 3021)`n"
         } else {
-            $res += "Type:         Single Host IP`n"
+            $res += "Type:          Single Host IP`n"
         }
 
         $outputBox.Text = $res
