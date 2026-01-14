@@ -3,7 +3,7 @@ Add-Type -AssemblyName System.Drawing
 
 # --- UI Setup ---
 $form = New-Object Windows.Forms.Form
-$form.Text = "Subnet Calculator Pro + IP Info"
+$form.Text = "Subnet Calculator"
 $form.Size = New-Object Drawing.Size(420, 580)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "FixedDialog"
@@ -60,7 +60,7 @@ $outputBox.ReadOnly = $true
 $outputBox.Font = New-Object Drawing.Font("Consolas", 10)
 $form.Controls.Add($outputBox)
 
-# --- Logic & Math ---
+# --- Logic & Math --- #
 
 function To-IPString ([uint64]$val) {
     $o1 = ($val -shr 24) -band 0xFF
